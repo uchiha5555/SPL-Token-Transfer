@@ -1,31 +1,41 @@
-const web3 = require('@solana/web3.js');
+
 const bs58 = require('bs58');
+const web3 = require('@solana/web3.js');
 const { transfer, getOrCreateAssociatedTokenAccount } = require('@solana/spl-token');
 
-(async () => {
+require('dotenv').config();
+// import AddressList
+const addressList = require("./addressList.json")
+
+//--------------------------------------------------------------------------------------------------------
+
+const airdropTokens = async () => {
     // Initialize connection to the Solana network
-    const connection = new web3.Connection(web3.clusterApiUrl('devnet'));
+  const connection = new web3.Connection(web3.clusterApiUrl('devnet'));
 
     // Set sender's public and private keys
-    const senderPrivateKey = bs58.decode("2eqn5FQMp812vQeo7TyXtEJNv3oMGom7n14PCKMAfyL7kvyrLqWyzr2g99RWhNRhDPvBKpKVvr1eDYUzTfKGsFAs");
-    const senderPublicKey = web3.Keypair.fromSecretKey(senderPrivateKey).publicKey;
-    const senderWallet = web3.Keypair.fromSecretKey(senderPrivateKey);
-
-
-    // Set recipient's public key and token amount to send
-    const recipientPublicKey = new web3.PublicKey('88o7Eq67spD6uh9M6TVszJDfMzJhfFLjro5hPMnzhwk2');
-    const amount = 1000 * Math.pow(10, 9); // Amount of tokens to send
+  const senderPrivateKey = bs58.decode(process.env.PRIVATE_KEY);
+  const senderWallet = web3.Keypair.fromSecretKey(senderPrivateKey);
+  const senderPublicKey = senderWallet.publicKey;
 
     // Set token program and mint address
-    const mintAddress = new web3.PublicKey('G4qRXZqdJDCsjMyrV61ciAxqzgjnQRFyMoUnfACJPCG3');
+  const mintAddress = new web3.PublicKey(process.env.MINT_ADDRESS);
 
-    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      senderWallet,
-      mintAddress,
-      senderPublicKey
-    );
-    
+  const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
+    connection,
+    senderWallet,
+    mintAddress,
+    senderPublicKey
+  );
+
+  const amount = 1000 * Math.pow(10, process.env.DECIMAL); // Amount of tokens to send
+
+    // Address List
+  for(let i = 0 ; i < addressList.length ; i++)
+  {
+    // Set recipient's public key and token amount to send
+    const recipientPublicKey = new web3.PublicKey(addressList[i]);
+
     const toTokenAccount = await getOrCreateAssociatedTokenAccount(
       connection,
       senderWallet,
@@ -43,4 +53,7 @@ const { transfer, getOrCreateAssociatedTokenAccount } = require('@solana/spl-tok
     );
 
     console.log(signature);
-})();
+  }
+}
+
+airdropTokens();
